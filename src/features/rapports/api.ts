@@ -3,7 +3,7 @@ import { apiClient } from "@/api/client";
 import { Rapport } from "@/types/rapport";
 import { mockRapports } from "./mock";
 
-const USE_MOCK = true; // TODO: passer à false une fois le backend NestJS /rapports disponible
+const USE_MOCK = false; // TODO: passer à false une fois le backend NestJS /rapports disponible
 
 async function fetchRapports(): Promise<Rapport[]> {
   if (USE_MOCK) return Promise.resolve(mockRapports);

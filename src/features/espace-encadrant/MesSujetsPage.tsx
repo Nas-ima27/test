@@ -8,17 +8,18 @@ import { Badge } from "@/components/ui/Badge";
 import { useSujets } from "@/features/sujets/api";
 import { useEncadrant } from "@/features/encadrants/api";
 import { AddSujetModal } from "@/features/sujets/AddSujetModal";
-
+import { useAuth } from "@/features/auth/AuthContext";
 // TODO: remplacer par l'id de l'encadrant réellement connecté une fois l'auth branchée
-const CURRENT_ENCADRANT_ID = 1;
+
 
 export function MesSujetsPage() {
   const navigate = useNavigate();
-  const { data: encadrant } = useEncadrant(CURRENT_ENCADRANT_ID);
+  const { user } = useAuth();
+  const { data: encadrant } = useEncadrant(user!.id);
   const { data: sujets = [], isLoading } = useSujets();
   const [showAdd, setShowAdd] = useState(false);
 
-  const mesSujets = sujets.filter((s) => s.encadrantId === CURRENT_ENCADRANT_ID);
+  const mesSujets = sujets.filter((s) => s.encadrantId === encadrant?.id);
 
   return (
     <div>

@@ -1,10 +1,10 @@
 // src/features/stagiaires/api.ts
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/api/client";
-import { CreateStagiairePayload, RapportStagiaireStatut, Stagiaire } from "@/types/stagiaire"; // MODIFIÉ — ajout RapportStagiaireStatut
+import { CreateStagiairePayload, RapportStagiaireStatut, Stagiaire } from "@/types/stagiaire";
 import { mockStagiaires } from "./mock";
 
-const USE_MOCK = true; // TODO: passer à false une fois le backend NestJS /stagiaires disponible
+const USE_MOCK = false; // backend NestJS /stagiaires branché
 
 async function fetchStagiaires(): Promise<Stagiaire[]> {
   if (USE_MOCK) return Promise.resolve(mockStagiaires);
@@ -75,24 +75,38 @@ async function assignEncadrant(stagiaireId: number, encadrantId: number, encadra
   return data;
 }
 
-async function deposerRapport(stagiaireId: number, fichierNom: string): Promise<Stagiaire> {
+/**
+ * MODIFIÉ : prend maintenant le vrai objet File (plus un simple nom de
+ * fichier) — le backend attend un multipart/form-data avec la clé EXACTE
+ * "file". L'appelant (RapportSection.tsx / useDeposerRapport) doit être
+ * mis à jour pour passer le File sélectionné plutôt que son .name.
+ */
+async function deposerRapport(stagiaireId: number, file: File): Promise<Stagiaire> {
   if (USE_MOCK) {
     const index = mockStagiaires.findIndex((s) => s.id === stagiaireId);
     mockStagiaires[index] = {
       ...mockStagiaires[index],
       rapportStatut: "En attente",
-      rapportFichierNom: fichierNom,
+      rapportFichierNom: file.name,
       rapportDateDepot: new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" }),
       rapportCommentaire: undefined,
     };
     return Promise.resolve(mockStagiaires[index]);
   }
   const formData = new FormData();
-  const { data } = await apiClient.post<Stagiaire>(`/stagiaires/${stagiaireId}/rapport`, formData);
+  formData.append("file", file); // clé "file" exacte, sensible à la casse
+
+  const { data } = await apiClient.post<Stagiaire>(
+    `/stagiaires/${stagiaireId}/rapport`,
+    formData,
+    // Override nécessaire : apiClient force "Content-Type: application/json"
+    // par défaut (voir api/client.ts), ce qui casserait le boundary
+    // multipart si on ne le remplace pas explicitement ici.
+    { headers: { "Content-Type": "multipart/form-data" } }
+  );
   return data;
 }
 
-// NOUVEAU — l'encadrant valide le rapport ou demande des corrections
 async function evaluerRapport(
   stagiaireId: number,
   statut: RapportStagiaireStatut,
@@ -166,11 +180,16 @@ export function useAssignEncadrant() {
   });
 }
 
+/**
+ * MODIFIÉ : "fichierNom: string" devient "file: File" — le composant
+ * appelant doit maintenant passer le File sélectionné dans l'input,
+ * pas juste son nom (voir RapportSection.tsx à mettre à jour).
+ */
 export function useDeposerRapport() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ stagiaireId, fichierNom }: { stagiaireId: number; fichierNom: string }) =>
-      deposerRapport(stagiaireId, fichierNom),
+    mutationFn: ({ stagiaireId, file }: { stagiaireId: number; file: File }) =>
+      deposerRapport(stagiaireId, file),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["stagiaires"] });
       queryClient.invalidateQueries({ queryKey: ["stagiaires", variables.stagiaireId] });
@@ -178,7 +197,6 @@ export function useDeposerRapport() {
   });
 }
 
-// NOUVEAU
 export function useEvaluerRapport() {
   const queryClient = useQueryClient();
   return useMutation({

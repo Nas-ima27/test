@@ -4,7 +4,7 @@ import { apiClient } from "@/api/client";
 import { CreateEncadrantPayload, Encadrant } from "@/types/encadrant"; // CORRIGÉ — on réutilise le vrai type, plus de redéfinition locale
 import { mockEncadrants } from "./mock";
 
-const USE_MOCK = true; // TODO: passer à false une fois le backend NestJS /encadrants disponible
+const USE_MOCK = false; // backend NestJS /encadrants branché // TODO: passer à false une fois le backend NestJS /encadrants disponible
 
 async function fetchEncadrants(): Promise<Encadrant[]> {
   if (USE_MOCK) return Promise.resolve(mockEncadrants);

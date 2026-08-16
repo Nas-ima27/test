@@ -4,14 +4,14 @@ import { apiClient } from "@/api/client";
 import { CreateJournalEntryPayload, JournalEntry } from "@/types/journal";
 import { mockJournalEntries } from "./mock";
 
-const USE_MOCK = true; // TODO: passer à false une fois le backend NestJS /journal disponible
+const USE_MOCK = false; // backend NestJS /stagiaires/:id/journal branché
 
 async function fetchJournalEntries(stagiaireId: number): Promise<JournalEntry[]> {
   if (USE_MOCK) {
     return Promise.resolve(
       mockJournalEntries
         .filter((e) => e.stagiaireId === stagiaireId)
-        .sort((a, b) => b.id - a.id) // les plus récentes en premier
+        .sort((a, b) => b.id - a.id)
     );
   }
   const { data } = await apiClient.get<JournalEntry[]>(`/stagiaires/${stagiaireId}/journal`);
@@ -25,10 +25,14 @@ async function createJournalEntry(payload: CreateJournalEntryPayload): Promise<J
       date: new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" }),
       ...payload,
     };
-    mockJournalEntries.push(created); // mutation réelle du tableau — leçon retenue des bugs précédents
+    mockJournalEntries.push(created);
     return Promise.resolve(created);
   }
-  const { data } = await apiClient.post<JournalEntry>(`/stagiaires/${payload.stagiaireId}/journal`, payload);
+  // MODIFIÉ : stagiaireId ne doit PAS être envoyé dans le body — le
+  // backend le lit depuis l'URL (:id) et rejette (400, forbidNonWhitelisted)
+  // tout champ non déclaré dans le DTO { type, contenu }.
+  const { stagiaireId, ...body } = payload;
+  const { data } = await apiClient.post<JournalEntry>(`/stagiaires/${stagiaireId}/journal`, body);
   return data;
 }
 

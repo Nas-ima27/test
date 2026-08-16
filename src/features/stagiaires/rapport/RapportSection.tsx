@@ -19,22 +19,24 @@ const STATUT_ICON = {
 export function RapportSection({ stagiaire }: RapportSectionProps) {
   const deposerRapport = useDeposerRapport();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
+  // MODIFIÉ : on garde le File complet (pas juste son nom) — nécessaire
+  // pour l'envoyer réellement au backend via FormData.
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const Icon = STATUT_ICON[stagiaire.rapportStatut];
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (file) setSelectedFileName(file.name);
+    if (file) setSelectedFile(file);
   }
 
   function handleDeposer() {
-    if (!selectedFileName) return;
+    if (!selectedFile) return;
     deposerRapport.mutate(
-      { stagiaireId: stagiaire.id, fichierNom: selectedFileName },
+      { stagiaireId: stagiaire.id, file: selectedFile },
       {
         onSuccess: () => {
-          setSelectedFileName(null);
+          setSelectedFile(null);
           if (fileInputRef.current) fileInputRef.current.value = "";
         },
       }
@@ -57,7 +59,18 @@ export function RapportSection({ stagiaire }: RapportSectionProps) {
           {stagiaire.rapportFichierNom && (
             <p className="text-sm text-slate-700 mt-2">
               <FileText className="h-3.5 w-3.5 inline mr-1.5 text-slate-400" />
-              {stagiaire.rapportFichierNom}
+              {stagiaire.rapportFichierUrl ? (
+                <a
+                  href={stagiaire.rapportFichierUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-blue-600"
+                >
+                  {stagiaire.rapportFichierNom}
+                </a>
+              ) : (
+                stagiaire.rapportFichierNom
+              )}
             </p>
           )}
           {stagiaire.rapportDateDepot && (
@@ -93,7 +106,7 @@ export function RapportSection({ stagiaire }: RapportSectionProps) {
             />
             <button
               onClick={handleDeposer}
-              disabled={!selectedFileName || deposerRapport.isPending}
+              disabled={!selectedFile || deposerRapport.isPending}
               className="flex items-center gap-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg px-4 py-2 disabled:opacity-50 shrink-0"
             >
               <FileUp className="h-3.5 w-3.5" />

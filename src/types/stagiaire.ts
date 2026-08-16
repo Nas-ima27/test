@@ -21,9 +21,10 @@ export interface Stagiaire {
   avancement: number;
   statut: StagiaireStatut;
   rapportStatut: RapportStagiaireStatut;
-  rapportFichierNom?: string;    // NOUVEAU — nom du fichier déposé
-  rapportDateDepot?: string;      // NOUVEAU — date du dernier dépôt
-  rapportCommentaire?: string;    // NOUVEAU — retour de l'encadrant si corrections demandées
+  rapportFichierNom?: string;
+  rapportFichierUrl?: string | null; // NOUVEAU — URL S3/MinIO du fichier réellement uploadé
+  rapportDateDepot?: string;
+  rapportCommentaire?: string;
   sujetId?: number;
   compteActif: boolean;
 }

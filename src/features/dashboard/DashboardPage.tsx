@@ -35,12 +35,13 @@ export function DashboardPage() {
           <h3 className="font-semibold text-slate-900 mb-1">Évolution des stages</h3>
           <p className="text-sm text-slate-500 mb-4">Nombre de stages démarrés par mois</p>
           <ResponsiveContainer width="100%" height={240}>
+            {/* MODIFIÉ — dataKey "stages" -> "count" (nom réel renvoyé par le backend) */}
             <LineChart data={stats.evolutionMensuelle}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis dataKey="mois" tick={{ fontSize: 12, fill: "#64748b" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 12, fill: "#64748b" }} axisLine={false} tickLine={false} />
               <Tooltip />
-              <Line type="monotone" dataKey="stages" stroke="#2563eb" strokeWidth={2.5} dot={{ r: 4, fill: "#2563eb" }} />
+              <Line type="monotone" dataKey="count" stroke="#2563eb" strokeWidth={2.5} dot={{ r: 4, fill: "#2563eb" }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -49,9 +50,11 @@ export function DashboardPage() {
           <h3 className="font-semibold text-slate-900 mb-1">Par département</h3>
           <p className="text-sm text-slate-500 mb-4">Stagiaires actifs</p>
           <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={stats.parDepartement} layout="vertical" margin={{ left: 8 }}>
+            {/* MODIFIÉ — stats.parDepartement -> stats.repartitionParDepartement,
+                dataKey "dept" -> "departement" (noms réels du backend) */}
+            <BarChart data={stats.repartitionParDepartement} layout="vertical" margin={{ left: 8 }}>
               <XAxis type="number" hide />
-              <YAxis dataKey="dept" type="category" tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} width={90} />
+              <YAxis dataKey="departement" type="category" tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} width={90} />
               <Tooltip />
               <Bar dataKey="count" fill="#2563eb" radius={[0, 4, 4, 0]} barSize={14} />
             </BarChart>

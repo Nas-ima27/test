@@ -2,6 +2,12 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 import { AuthUser, LoginCredentials } from "@/types/auth";
 import { mockCredentials } from "./mock";
+import { apiClient } from "@/api/client";
+
+// Flag par fichier, cohérent avec le pattern utilisé dans le reste de
+// l'app (features/<domaine>/api.ts) — permet de revenir au mock
+// facilement pour une démo sans backend, sans toucher au reste du code.
+const USE_MOCK = false;
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -32,19 +38,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   async function login({ email, password }: LoginCredentials): Promise<{ success: boolean; error?: string }> {
-    // TODO: remplacer par un appel réel à apiClient.post("/auth/login", ...) une fois le backend NestJS disponible
-    const match = mockCredentials.find(
-      (c) => c.email.toLowerCase() === email.toLowerCase() && c.password === password
-    );
+    if (USE_MOCK) {
+      const match = mockCredentials.find(
+        (c) => c.email.toLowerCase() === email.toLowerCase() && c.password === password
+      );
 
-    if (!match) {
-      return { success: false, error: "E-mail ou mot de passe incorrect." };
+      if (!match) {
+        return { success: false, error: "E-mail ou mot de passe incorrect." };
+      }
+
+      setUser(match.user);
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(match.user));
+      sessionStorage.setItem("sgas_token", "mock-token");
+      return { success: true };
     }
 
-    setUser(match.user);
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(match.user));
-    sessionStorage.setItem("sgas_token", "mock-token"); // pour rester cohérent avec apiClient.ts
-    return { success: true };
+    try {
+      // Backend : POST /auth/login -> { user: AuthUser, token: string }
+      const { data } = await apiClient.post<{ user: AuthUser; token: string }>(
+        "/auth/login",
+        { email, password }
+      );
+
+      setUser(data.user);
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data.user));
+      sessionStorage.setItem("sgas_token", data.token);
+      return { success: true };
+    } catch (error: any) {
+      // Le backend renvoie { message, error, statusCode } — message est
+      // déjà en français et affichable tel quel (401 identifiants
+      // invalides, 403 compte désactivé).
+      const message =
+        error.response?.data?.message ?? "E-mail ou mot de passe incorrect.";
+      return { success: false, error: message };
+    }
   }
 
   function logout() {

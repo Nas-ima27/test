@@ -4,7 +4,7 @@ import { apiClient } from "@/api/client";
 import { CreateSujetPayload, Sujet, SujetStatut } from "@/types/sujet"; // MODIFIÉ — ajout SujetStatut
 import { mockSujets } from "./mock";
 
-const USE_MOCK = true; // TODO: passer à false une fois le backend NestJS /sujets disponible
+const USE_MOCK = false; // backend NestJS /sujets branché // TODO: passer à false une fois le backend NestJS /sujets disponible
 
 async function fetchSujets(): Promise<Sujet[]> {
   if (USE_MOCK) return Promise.resolve(mockSujets);

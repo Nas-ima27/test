@@ -17,7 +17,7 @@ interface CreateStagiairePayload {
   rapportStatut: RapportStagiaireStatut;
 }
 
-type ApiStagiairePayload = Omit<CreateStagiairePayload, "encadrantId"> & {
+type ApiStagiairePayload = Omit<CreateStagiairePayload, "encadrantId" | "rapportStatut"> & {
   encadrantId: number;
 };
 
@@ -38,7 +38,6 @@ const emptyForm: CreateStagiairePayload = {
   rapportStatut: "À venir" as RapportStagiaireStatut,
 };
 
-// NOUVEAU — convertit un Stagiaire existant en valeurs de formulaire, pour le mode édition
 function toFormValues(s: Stagiaire): CreateStagiairePayload {
   return {
     name: s.name, email: s.email, ecole: s.ecole, filiere: s.filiere,
@@ -48,25 +47,32 @@ function toFormValues(s: Stagiaire): CreateStagiairePayload {
 }
 
 function toApiPayload(form: CreateStagiairePayload): ApiStagiairePayload {
+  // MODIFIÉ — rapportStatut retiré du payload envoyé au backend : c'est
+  // un champ calculé côté serveur (toujours "Non déposé" à la création,
+  // voir BACKEND_SPEC_UPDATED.md §3), jamais accepté par CreateStagiaireDto
+  // (ValidationPipe avec forbidNonWhitelisted rejette sinon la requête
+  // avec 400 "property rapportStatut should not exist").
+  const { rapportStatut, ...rest } = form;
   return {
-    ...form,
+    ...rest,
     encadrantId: form.encadrantId ?? 0,
   };
 }
 
 interface AddStagiaireModalProps {
-  stagiaire?: Stagiaire; // NOUVEAU — présent = mode édition, absent = mode création
+  stagiaire?: Stagiaire;
   onClose: () => void;
 }
 
 export function AddStagiaireModal({ stagiaire, onClose }: AddStagiaireModalProps) {
-  const isEditing = Boolean(stagiaire); // NOUVEAU
+  const isEditing = Boolean(stagiaire);
   const [form, setForm] = useState<CreateStagiairePayload>(
     stagiaire ? toFormValues(stagiaire) : emptyForm
   );
+  const [error, setError] = useState<string | null>(null);
   const { data: encadrants = [] } = useEncadrants();
   const createStagiaire = useCreateStagiaire();
-  const updateStagiaire = useUpdateStagiaire(); // NOUVEAU
+  const updateStagiaire = useUpdateStagiaire();
 
   function set<K extends keyof CreateStagiairePayload>(key: K, value: CreateStagiairePayload[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -74,26 +80,30 @@ export function AddStagiaireModal({ stagiaire, onClose }: AddStagiaireModalProps
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    setError(null);
     const payload = toApiPayload(form);
+
+    const onError = (err: any) => {
+      setError(err.response?.data?.message ?? "Une erreur est survenue. Réessayez.");
+    };
 
     if (isEditing && stagiaire) {
       updateStagiaire.mutate(
         { id: stagiaire.id, payload },
-        { onSuccess: onClose }
+        { onSuccess: onClose, onError }
       );
     } else {
-      createStagiaire.mutate(payload, { onSuccess: onClose });
+      createStagiaire.mutate(payload, { onSuccess: onClose, onError });
     }
   }
 
-  const isPending = createStagiaire.isPending || updateStagiaire.isPending; // NOUVEAU
+  const isPending = createStagiaire.isPending || updateStagiaire.isPending;
 
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
       <form onSubmit={handleSubmit} className="bg-white rounded-2xl w-full max-w-lg shadow-xl my-8">
         <div className="flex items-start justify-between p-6 pb-4">
           <div>
-            {/* MODIFIÉ — titre dynamique */}
             <h3 className="text-lg font-bold text-slate-900">
               {isEditing ? "Modifier le stagiaire" : "Ajouter un stagiaire"}
             </h3>
@@ -107,6 +117,12 @@ export function AddStagiaireModal({ stagiaire, onClose }: AddStagiaireModalProps
         </div>
 
         <div className="px-6 pb-6 space-y-4">
+          {error && (
+            <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5">
+              {error}
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">Nom complet</label>
             <input required value={form.name} onChange={(e) => set("name", e.target.value)}
@@ -173,7 +189,6 @@ export function AddStagiaireModal({ stagiaire, onClose }: AddStagiaireModalProps
           <button type="button" onClick={onClose} className="px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-lg">
             Annuler
           </button>
-          {/* MODIFIÉ — texte du bouton dynamique */}
           <button type="submit" disabled={isPending}
             className="px-4 py-2.5 text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 rounded-lg disabled:opacity-60">
             {isPending ? "Enregistrement..." : isEditing ? "Enregistrer les modifications" : "Créer le compte"}

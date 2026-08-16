@@ -8,7 +8,7 @@ import { useStagiaire } from "@/features/stagiaires/api";
 import { useAuth } from "@/features/auth/AuthContext";
 
 export function SujetsDisponiblesPage() {
-  const { user } = useAuth(); // CORRIGÉ — déplacé à l'intérieur du composant
+  const { user } = useAuth();
   const { data: sujets = [], isLoading } = useSujets();
   const { data: candidatures = [] } = useCandidatures();
   const { data: stagiaire } = useStagiaire(user!.id);
@@ -30,6 +30,7 @@ export function SujetsDisponiblesPage() {
       {
         candidatName: stagiaire.name,
         candidatEmail: stagiaire.email,
+        stagiaireId: stagiaire.id, // NOUVEAU — obligatoire côté backend, toujours l'id du stagiaire connecté
         sujetId,
         sujetTitre,
         ecole: stagiaire.ecole,

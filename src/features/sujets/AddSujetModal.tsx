@@ -1,8 +1,8 @@
 // src/features/sujets/AddSujetModal.tsx
 import { FormEvent, useState } from "react";
 import { X, Search, AlertCircle } from "lucide-react";
-import { CreateSujetPayload, Sujet, SujetStatut } from "@/types/sujet"; // MODIFIÉ — ajout Sujet
-import { useCreateSujet, useUpdateSujet, checkSujetSimilarity } from "./api"; // MODIFIÉ — ajout useUpdateSujet
+import { CreateSujetPayload, Sujet, SujetStatut } from "@/types/sujet";
+import { useCreateSujet, useUpdateSujet, checkSujetSimilarity } from "./api";
 
 const DEPARTEMENTS = [
   "Systèmes d'Information", "Finance", "Ressources Humaines",
@@ -13,7 +13,7 @@ interface AddSujetModalProps {
   encadrantId: number;
   encadrantName: string;
   departementDefault?: string;
-  sujet?: Sujet; // NOUVEAU — présent = mode édition, absent = mode création
+  sujet?: Sujet;
   onClose: () => void;
 }
 
@@ -24,7 +24,7 @@ interface SimilarSujet {
 }
 
 export function AddSujetModal({ encadrantId, encadrantName, departementDefault, sujet, onClose }: AddSujetModalProps) {
-  const isEditing = Boolean(sujet); // NOUVEAU
+  const isEditing = Boolean(sujet);
 
   const [titre, setTitre] = useState(sujet?.titre ?? "");
   const [description, setDescription] = useState(sujet?.description ?? "");
@@ -37,7 +37,7 @@ export function AddSujetModal({ encadrantId, encadrantName, departementDefault, 
   const [checkError, setCheckError] = useState<string | null>(null);
 
   const createSujet = useCreateSujet();
-  const updateSujet = useUpdateSujet(); // NOUVEAU
+  const updateSujet = useUpdateSujet();
 
   async function handleCheckSimilarity() {
     if (!titre.trim()) return;
@@ -46,8 +46,15 @@ export function AddSujetModal({ encadrantId, encadrantName, departementDefault, 
     try {
       const results = await checkSujetSimilarity(titre, description);
       setSimilaires(results);
-    } catch {
-      setCheckError("La vérification de similarité nécessite le backend, pas encore disponible en mode démo.");
+    } catch (error: any) {
+      // MODIFIÉ : message générique — le backend est maintenant branché,
+      // l'ancien message ("nécessite le backend, pas encore disponible
+      // en mode démo") n'avait plus lieu d'être. Affiche le message du
+      // backend si disponible (ex: 401/403), sinon un message générique.
+      setCheckError(
+        error.response?.data?.message ??
+          "Impossible de vérifier la similarité pour le moment. Réessayez."
+      );
     } finally {
       setChecking(false);
     }
@@ -71,20 +78,19 @@ export function AddSujetModal({ encadrantId, encadrantName, departementDefault, 
     };
 
     if (isEditing && sujet) {
-      updateSujet.mutate({ id: sujet.id, payload }, { onSuccess: onClose }); // NOUVEAU
+      updateSujet.mutate({ id: sujet.id, payload }, { onSuccess: onClose });
     } else {
       createSujet.mutate(payload, { onSuccess: onClose });
     }
   }
 
-  const isPending = createSujet.isPending || updateSujet.isPending; // NOUVEAU
+  const isPending = createSujet.isPending || updateSujet.isPending;
 
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
       <form onSubmit={handleSubmit} className="bg-white rounded-2xl w-full max-w-lg shadow-xl my-8">
         <div className="flex items-start justify-between p-6 pb-4">
           <div>
-            {/* MODIFIÉ — titre dynamique */}
             <h3 className="text-lg font-bold text-slate-900">
               {isEditing ? "Modifier le sujet" : "Proposer un sujet"}
             </h3>
@@ -147,7 +153,6 @@ export function AddSujetModal({ encadrantId, encadrantName, departementDefault, 
               <p className="text-xs text-emerald-700 mt-2">Aucun sujet similaire détecté.</p>
             )}
           </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Département</label>
@@ -188,7 +193,6 @@ export function AddSujetModal({ encadrantId, encadrantName, departementDefault, 
           <button type="button" onClick={onClose} className="px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-lg">
             Annuler
           </button>
-          {/* MODIFIÉ — texte dynamique */}
           <button
             type="submit"
             disabled={isPending}

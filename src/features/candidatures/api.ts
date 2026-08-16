@@ -4,7 +4,7 @@ import { apiClient } from "@/api/client";
 import { Candidature, CandidatureStatut, CreateCandidaturePayload } from "@/types/candidature"; // MODIFIÉ — ajout CreateCandidaturePayload
 import { mockCandidatures } from "./mock";
 
-const USE_MOCK = true; // TODO: passer à false une fois le backend NestJS /candidatures disponible
+const USE_MOCK = false // TODO: passer à false une fois le backend NestJS /candidatures disponible
 
 async function fetchCandidatures(): Promise<Candidature[]> {
   if (USE_MOCK) return Promise.resolve(mockCandidatures);

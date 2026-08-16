@@ -1,7 +1,7 @@
 // src/features/encadrants/AddEncadrantModal.tsx
 import { FormEvent, useState } from "react";
 import { X } from "lucide-react";
-import { CreateEncadrantPayload, Encadrant } from "@/types/encadrant"; // CORRIGÉ — un seul type importé, celui qui existe vraiment
+import { CreateEncadrantPayload, Encadrant } from "@/types/encadrant";
 import { useCreateEncadrant, useUpdateEncadrant } from "./api";
 
 const DEPARTEMENTS = [
@@ -22,8 +22,8 @@ interface AddEncadrantModalProps {
 
 export function AddEncadrantModal({ encadrant, onClose }: AddEncadrantModalProps) {
   const isEditing = Boolean(encadrant);
-  // CORRIGÉ — le useState est bien à l'intérieur du composant, où "encadrant" est accessible
   const [form, setForm] = useState<CreateEncadrantPayload>(encadrant ? toFormValues(encadrant) : emptyForm);
+  const [error, setError] = useState<string | null>(null);
   const createEncadrant = useCreateEncadrant();
   const updateEncadrant = useUpdateEncadrant();
 
@@ -33,10 +33,16 @@ export function AddEncadrantModal({ encadrant, onClose }: AddEncadrantModalProps
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    setError(null);
+
+    const onError = (err: any) => {
+      setError(err.response?.data?.message ?? "Une erreur est survenue. Réessayez.");
+    };
+
     if (isEditing && encadrant) {
-      updateEncadrant.mutate({ id: encadrant.id, payload: form }, { onSuccess: onClose });
+      updateEncadrant.mutate({ id: encadrant.id, payload: form }, { onSuccess: onClose, onError });
     } else {
-      createEncadrant.mutate(form, { onSuccess: onClose });
+      createEncadrant.mutate(form, { onSuccess: onClose, onError });
     }
   }
 
@@ -60,6 +66,12 @@ export function AddEncadrantModal({ encadrant, onClose }: AddEncadrantModalProps
         </div>
 
         <div className="px-6 pb-6 space-y-4">
+          {error && (
+            <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5">
+              {error}
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">Nom complet</label>
             <input required placeholder="Ex : M. Karim Idrissi" value={form.name} onChange={(e) => set("name", e.target.value)}

@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
 import { X } from "lucide-react";
-import { CreateUserPayload, UserRole, UserStatus } from "@/types/user";
+import { CreateUserPayload } from "@/types/user";
 import { useCreateUser } from "./api";
 
 interface AddUserModalProps {
@@ -12,12 +12,14 @@ const initialForm: CreateUserPayload = {
   lastName: "",
   email: "",
   service: "",
-  role: "Stagiaire",
-  status: "Actif",
+  isSuperAdmin: false,
 };
 
 export function AddUserModal({ onClose }: AddUserModalProps) {
   const [form, setForm] = useState<CreateUserPayload>(initialForm);
+  // NOUVEAU — affiche le message d'erreur si la création échoue (ex: 409
+  // "Un compte existe déjà avec cet email.") — avant, l'échec était silencieux.
+  const [error, setError] = useState<string | null>(null);
   const createUser = useCreateUser();
 
   function handleChange<K extends keyof CreateUserPayload>(key: K, value: CreateUserPayload[K]) {
@@ -26,7 +28,13 @@ export function AddUserModal({ onClose }: AddUserModalProps) {
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    createUser.mutate(form, { onSuccess: onClose });
+    setError(null);
+    createUser.mutate(form, {
+      onSuccess: onClose,
+      onError: (err: any) => {
+        setError(err.response?.data?.message ?? "Une erreur est survenue. Réessayez.");
+      },
+    });
   }
 
   return (
@@ -35,7 +43,10 @@ export function AddUserModal({ onClose }: AddUserModalProps) {
         <div className="flex items-start justify-between p-6 pb-4">
           <div>
             <h3 className="text-lg font-bold text-slate-900">Nouvel utilisateur</h3>
-            <p className="text-sm text-slate-500 mt-0.5">Créez un nouveau compte pour accéder à SGAS.</p>
+            <p className="text-sm text-slate-500 mt-0.5">
+              Créez un nouveau compte interne. Les identifiants de connexion
+              seront envoyés par e-mail automatiquement.
+            </p>
           </div>
           <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600">
             <X className="h-5 w-5" />
@@ -43,6 +54,12 @@ export function AddUserModal({ onClose }: AddUserModalProps) {
         </div>
 
         <div className="px-6 pb-6 space-y-4">
+          {error && (
+            <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5">
+              {error}
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Prénom</label>
@@ -86,32 +103,29 @@ export function AddUserModal({ onClose }: AddUserModalProps) {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Rôle</label>
-              <select
-                value={form.role}
-                onChange={(e) => handleChange("role", e.target.value as UserRole)}
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500"
-              >
-                <option>Stagiaire</option>
-                <option>Encadrant</option>
-                <option>RH</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Statut</label>
-              <select
-                value={form.status}
-                onChange={(e) => handleChange("status", e.target.value as UserStatus)}
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500"
-              >
-                <option>Actif</option>
-                <option>Inactif</option>
-                <option>Suspendu</option>
-              </select>
-            </div>
-          </div>
+          {/* NOUVEAU — remplace les anciens champs Rôle/Statut, retirés
+              (n'existent plus côté backend, voir
+              FRONTEND_INTEGRATION_NOTES.md §4). isSuperAdmin détermine si
+              ce nouveau compte pourra lui-même créer d'autres comptes
+              internes ("Admin complet") ou seulement gérer
+              Encadrant/Stagiaire ("Gestionnaire", valeur par défaut). */}
+          <label className="flex items-start gap-2.5 border border-slate-200 rounded-lg px-3 py-2.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.isSuperAdmin ?? false}
+              onChange={(e) => handleChange("isSuperAdmin", e.target.checked)}
+              className="mt-0.5"
+            />
+            <span className="text-sm text-slate-700">
+              <span className="font-medium">Administrateur principal</span>
+              <br />
+              <span className="text-slate-500">
+                Pourra créer d'autres comptes internes. Laissez décoché pour
+                un compte "Gestionnaire" (accès complet sauf création de
+                comptes).
+              </span>
+            </span>
+          </label>
         </div>
 
         <div className="flex items-center justify-end gap-3 border-t border-slate-100 px-6 py-4">

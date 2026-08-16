@@ -5,6 +5,7 @@ export interface Candidature {
   id: number;
   candidatName: string;
   candidatEmail: string;
+  stagiaireId: number; // NOUVEAU — le backend le renvoie et l'exige à la création
   sujetId: number;
   sujetTitre: string;
   ecole: string;
@@ -13,10 +14,11 @@ export interface Candidature {
   dateCandidature: string;
 }
 
-// NOUVEAU — ce que le stagiaire envoie en candidatant à un sujet
+// MODIFIÉ — stagiaireId ajouté, obligatoire côté backend
 export interface CreateCandidaturePayload {
   candidatName: string;
   candidatEmail: string;
+  stagiaireId: number; // NOUVEAU
   sujetId: number;
   sujetTitre: string;
   ecole: string;

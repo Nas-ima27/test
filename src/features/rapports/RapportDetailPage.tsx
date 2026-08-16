@@ -20,7 +20,7 @@ export function RapportDetailPage() {
     return (
       <div className="p-10 text-center text-sm text-slate-400">
         Rapport introuvable.{" "}
-        <button onClick={() => navigate("..")} className="text-blue-600 hover:underline"> {/* CORRIGÉ — était "/bibliotheque" */}
+        <button onClick={() => navigate("..")} className="text-blue-600 hover:underline">
           Retour à la bibliothèque
         </button>
       </div>
@@ -29,10 +29,47 @@ export function RapportDetailPage() {
 
   const travauxSimilaires = rapports.filter((r) => r.id !== rapport.id).slice(0, 2);
 
+  const hasFichier = Boolean(rapport.fichierUrl);
+
+  // Google Docs Viewer nécessite une URL publiquement accessible sur
+  // internet — ne fonctionne pas avec localhost (Google ne peut pas
+  // atteindre ta machine). Retiré temporairement pendant le développement
+  // local ; à réactiver une fois déployé avec une vraie URL publique
+  // (voir getViewableUrl ci-dessous, conservée en commentaire pour
+  // réactivation rapide).
+  //
+  // function isPdf(url: string): boolean {
+  //   return url.toLowerCase().split("?")[0].endsWith(".pdf");
+  // }
+  // function getViewableUrl(url: string): string {
+  //   if (isPdf(url)) return url;
+  //   return `https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`;
+  // }
+
+  function handleOuvrir() {
+    if (rapport?.fichierUrl) {
+      window.open(rapport.fichierUrl, "_blank", "noopener,noreferrer");
+    }
+  }
+
+  function handleTelecharger() {
+    // Le téléchargement, lui, utilise toujours l'URL directe du fichier
+    // (jamais le viewer Google Docs) — comportement volontaire.
+    if (!rapport?.fichierUrl) return;
+    const link = document.createElement("a");
+    link.href = rapport.fichierUrl;
+    link.download = rapport.titre;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   return (
     <div>
       <button
-        onClick={() => navigate("..")} // CORRIGÉ — était "/bibliotheque"
+        onClick={() => navigate("..")}
         className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-800 mb-4"
       >
         <ArrowLeft className="h-4 w-4" /> Retour à la bibliothèque
@@ -56,10 +93,18 @@ export function RapportDetailPage() {
             </div>
           </div>
           <div className="flex gap-2">
-            <button className="flex items-center gap-2 border border-slate-200 rounded-lg px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">
+            <button
+              onClick={handleOuvrir}
+              disabled={!hasFichier}
+              className="flex items-center gap-2 border border-slate-200 rounded-lg px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <Eye className="h-4 w-4" /> Visualiser le PDF
             </button>
-            <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2.5 text-sm font-medium">
+            <button
+              onClick={handleTelecharger}
+              disabled={!hasFichier}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2.5 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <Download className="h-4 w-4" /> Télécharger
             </button>
           </div>
@@ -95,8 +140,16 @@ export function RapportDetailPage() {
               <Eye className="h-5 w-5" />
             </div>
             <p className="font-medium text-slate-800">Aperçu du document PDF</p>
-            <p className="text-sm text-slate-500 mt-1">Cliquez pour visualiser le rapport complet</p>
-            <button className="flex items-center gap-2 border border-slate-200 rounded-lg px-4 py-2 text-sm font-medium mt-4 hover:bg-slate-50">
+            <p className="text-sm text-slate-500 mt-1">
+              {hasFichier
+                ? "Cliquez pour visualiser le rapport complet"
+                : "Aucun fichier associé à ce rapport."}
+            </p>
+            <button
+              onClick={handleOuvrir}
+              disabled={!hasFichier}
+              className="flex items-center gap-2 border border-slate-200 rounded-lg px-4 py-2 text-sm font-medium mt-4 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <ExternalLink className="h-4 w-4" /> Ouvrir le PDF
             </button>
           </div>
@@ -120,7 +173,7 @@ export function RapportDetailPage() {
               {travauxSimilaires.map((r) => (
                 <button
                   key={r.id}
-                  onClick={() => navigate(`../${r.id}`)} // CORRIGÉ — relatif, était `/bibliotheque/${r.id}`
+                  onClick={() => navigate(`../${r.id}`)}
                   className="block text-left w-full hover:opacity-80"
                 >
                   <p className="text-sm font-medium text-slate-800 leading-snug">{r.titre}</p>

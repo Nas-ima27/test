@@ -99,10 +99,13 @@ async function deposerRapport(stagiaireId: number, file: File): Promise<Stagiair
   const { data } = await apiClient.post<Stagiaire>(
     `/stagiaires/${stagiaireId}/rapport`,
     formData,
-    // Override nécessaire : apiClient force "Content-Type: application/json"
-    // par défaut (voir api/client.ts), ce qui casserait le boundary
-    // multipart si on ne le remplace pas explicitement ici.
-    { headers: { "Content-Type": "multipart/form-data" } }
+    // On NE fixe PAS Content-Type ici : avec un FormData, axios/le
+    // navigateur doivent générer eux-mêmes l'en-tête
+    // "multipart/form-data; boundary=...". Le forcer à la main (comme
+    // avant) écrase le boundary et produit un corps multipart invalide
+    // que le backend ne peut pas parser — le dépôt échouait en silence.
+    // "Content-Type: undefined" annule ici le défaut JSON de apiClient.
+    { headers: { "Content-Type": undefined } }
   );
   return data;
 }

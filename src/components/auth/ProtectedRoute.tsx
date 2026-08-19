@@ -3,6 +3,7 @@ import { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/features/auth/AuthContext";
 import { AppRole } from "@/types/auth";
+import { MandatoryPasswordChangeScreen } from "./MandatoryPasswordChangeScreen";
 
 const ROLE_HOME: Record<AppRole, string> = {
   Admin: "/",
@@ -29,6 +30,15 @@ export function ProtectedRoute({ allowedRoles, children }: ProtectedRouteProps) 
   if (!allowedRoles.includes(user.role)) {
     // Connecté, mais mauvais rôle pour cet espace — on le renvoie chez lui plutôt qu'un simple message d'erreur
     return <Navigate to={ROLE_HOME[user.role]} replace />;
+  }
+
+  // NOUVEAU — compte encore sur son mot de passe par défaut prévisible
+  // (voir backend default-password.util.ts) : bloque tout le reste de
+  // l'app (sidebar, routes...) tant qu'il n'est pas changé. Placé ici
+  // (choke point unique pour les 3 espaces Admin/Encadrant/Stagiaire)
+  // plutôt que dupliqué dans chaque layout.
+  if (user.mustChangePassword) {
+    return <MandatoryPasswordChangeScreen />;
   }
 
   return <>{children}</>;

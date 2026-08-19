@@ -14,6 +14,11 @@ interface AuthContextValue {
   isLoading: boolean;
   login: (credentials: LoginCredentials) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
+  // NOUVEAU — met à jour l'utilisateur en session sans repasser par un
+  // login. Utilisé après PATCH /auth/change-password pour lever
+  // immédiatement le blocage ProtectedRoute (mustChangePassword: false),
+  // qui sinon resterait basé sur la valeur figée au moment du login.
+  updateUser: (patch: Partial<AuthUser>) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -80,8 +85,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     sessionStorage.removeItem("sgas_token");
   }
 
+  function updateUser(patch: Partial<AuthUser>) {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, ...patch };
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+  }
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

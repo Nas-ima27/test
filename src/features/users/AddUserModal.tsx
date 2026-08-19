@@ -1,7 +1,8 @@
 import { FormEvent, useState } from "react";
 import { X } from "lucide-react";
-import { CreateUserPayload } from "@/types/user";
+import { CreateUserPayload, User } from "@/types/user";
 import { useCreateUser } from "./api";
+import { CreatedAccountSummary } from "@/components/shared/CreatedAccountSummary";
 
 interface AddUserModalProps {
   onClose: () => void;
@@ -20,6 +21,12 @@ export function AddUserModal({ onClose }: AddUserModalProps) {
   // NOUVEAU — affiche le message d'erreur si la création échoue (ex: 409
   // "Un compte existe déjà avec cet email.") — avant, l'échec était silencieux.
   const [error, setError] = useState<string | null>(null);
+  // NOUVEAU — le compte créé (avec tempPassword) reste affiché après succès
+  // au lieu de fermer immédiatement la modale : l'envoi automatique par
+  // e-mail est désactivé pour le moment (voir CreatedAccountSummary), donc
+  // le mot de passe par défaut doit toujours être visible ici, sinon il
+  // est perdu.
+  const [createdUser, setCreatedUser] = useState<User | null>(null);
   const createUser = useCreateUser();
 
   function handleChange<K extends keyof CreateUserPayload>(key: K, value: CreateUserPayload[K]) {
@@ -30,11 +37,22 @@ export function AddUserModal({ onClose }: AddUserModalProps) {
     e.preventDefault();
     setError(null);
     createUser.mutate(form, {
-      onSuccess: onClose,
+      onSuccess: setCreatedUser,
       onError: (err: any) => {
         setError(err.response?.data?.message ?? "Une erreur est survenue. Réessayez.");
       },
     });
+  }
+
+  if (createdUser && createdUser.tempPassword) {
+    return (
+      <CreatedAccountSummary
+        name={`${createdUser.firstName} ${createdUser.lastName}`}
+        email={createdUser.email}
+        tempPassword={createdUser.tempPassword}
+        onClose={onClose}
+      />
+    );
   }
 
   return (
@@ -44,8 +62,8 @@ export function AddUserModal({ onClose }: AddUserModalProps) {
           <div>
             <h3 className="text-lg font-bold text-slate-900">Nouvel utilisateur</h3>
             <p className="text-sm text-slate-500 mt-0.5">
-              Créez un nouveau compte interne. Les identifiants de connexion
-              seront envoyés par e-mail automatiquement.
+              Créez un nouveau compte interne. Un mot de passe par défaut
+              sera généré et affiché ici juste après la création.
             </p>
           </div>
           <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-600">

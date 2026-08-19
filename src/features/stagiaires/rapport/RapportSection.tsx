@@ -43,6 +43,10 @@ export function RapportSection({ stagiaire }: RapportSectionProps) {
     );
   }
 
+  const erreurDepot = deposerRapport.isError
+    ? "Le dépôt a échoué. Vérifiez le fichier et réessayez."
+    : null;
+
   const peutDeposer = stagiaire.rapportStatut !== "Validé";
 
   return (
@@ -114,6 +118,12 @@ export function RapportSection({ stagiaire }: RapportSectionProps) {
             </button>
           </div>
           <p className="text-xs text-slate-400 mt-2">Formats acceptés : PDF, DOC, DOCX</p>
+          {erreurDepot && (
+            <p className="text-xs text-red-600 mt-2 flex items-center gap-1">
+              <AlertTriangle className="h-3.5 w-3.5" />
+              {erreurDepot}
+            </p>
+          )}
         </div>
       )}
 

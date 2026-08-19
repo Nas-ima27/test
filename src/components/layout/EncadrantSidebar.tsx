@@ -1,7 +1,7 @@
 // src/components/layout/EncadrantSidebar.tsx
 import { NavLink, useNavigate } from "react-router-dom"; // MODIFIÉ — ajout useNavigate
 import {
-  LayoutDashboard, ClipboardList, Briefcase, GraduationCap, BookOpen, LogOut,
+  LayoutDashboard, ClipboardList, Briefcase, GraduationCap, BookOpen, UserCircle, LogOut,
 } from "lucide-react";
 import { useAuth } from "@/features/auth/AuthContext"; // NOUVEAU
 
@@ -11,6 +11,10 @@ const NAV_ITEMS = [
   { to: "/espace-encadrant/candidatures", label: "Candidatures reçues", icon: Briefcase },
   { to: "/espace-encadrant/stagiaires", label: "Mes stagiaires", icon: GraduationCap },
   { to: "/espace-encadrant/bibliotheque", label: "Bibliothèque", icon: BookOpen },
+  // AJOUTÉ — la page existait déjà (MonProfilPage.tsx, route /profil) mais
+  // rien n'y menait dans la nav : aucun moyen d'y accéder pour changer son
+  // mot de passe (voir ChangePasswordSection.tsx sur cette page).
+  { to: "/espace-encadrant/profil", label: "Mon profil", icon: UserCircle },
 ];
 
 export function EncadrantSidebar() {

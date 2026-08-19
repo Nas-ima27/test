@@ -1,7 +1,7 @@
 // src/components/layout/StagiaireSidebar.tsx
 import { NavLink, useNavigate } from "react-router-dom"; // MODIFIÉ — ajout useNavigate
 import {
-  LayoutDashboard, ClipboardList, Briefcase, GraduationCap, FileUp, BookOpen, LogOut,
+  LayoutDashboard, ClipboardList, Briefcase, GraduationCap, FileUp, BookOpen, UserCircle, LogOut,
 } from "lucide-react";
 import { useAuth } from "@/features/auth/AuthContext"; // NOUVEAU
 const NAV_ITEMS = [
@@ -11,6 +11,10 @@ const NAV_ITEMS = [
   { to: "/espace-stagiaire/mon-stage", label: "Mon stage", icon: GraduationCap },
   { to: "/espace-stagiaire/rapport", label: "Mon rapport", icon: FileUp },
   { to: "/espace-stagiaire/bibliotheque", label: "Bibliothèque", icon: BookOpen },
+  // AJOUTÉ — la page existait déjà (MonProfilPage.tsx, route /profil) mais
+  // rien n'y menait dans la nav : aucun moyen d'y accéder pour changer son
+  // mot de passe (voir ChangePasswordSection.tsx sur cette page).
+  { to: "/espace-stagiaire/profil", label: "Mon profil", icon: UserCircle },
 ];
 
 export function StagiaireSidebar() {

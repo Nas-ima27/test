@@ -3,6 +3,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useAuth } from "@/features/auth/AuthContext";
 import { useStagiaire } from "@/features/stagiaires/api";
 import { useUpdateStagiaireProfile } from "@/features/stagiaires/api";
+import { ChangePasswordSection } from "@/components/shared/ChangePasswordSection";
 
 interface ProfileForm {
   telephone: string;
@@ -142,6 +143,10 @@ export function MonProfilPage() {
           </button>
         </div>
       </form>
+
+      <div className="mt-6">
+        <ChangePasswordSection />
+      </div>
     </div>
   );
 }

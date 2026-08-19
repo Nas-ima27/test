@@ -3,6 +3,7 @@ import { FormEvent, useState } from "react";
 import { X } from "lucide-react";
 import { CreateEncadrantPayload, Encadrant } from "@/types/encadrant";
 import { useCreateEncadrant, useUpdateEncadrant } from "./api";
+import { CreatedAccountSummary } from "@/components/shared/CreatedAccountSummary";
 
 const DEPARTEMENTS = [
   "Systèmes d'Information", "Finance", "Ressources Humaines",
@@ -24,6 +25,11 @@ export function AddEncadrantModal({ encadrant, onClose }: AddEncadrantModalProps
   const isEditing = Boolean(encadrant);
   const [form, setForm] = useState<CreateEncadrantPayload>(encadrant ? toFormValues(encadrant) : emptyForm);
   const [error, setError] = useState<string | null>(null);
+  // NOUVEAU — reste affiché après création pour montrer le mot de passe
+  // par défaut du compte de connexion créé en même temps que la fiche
+  // (voir CreatedAccountSummary — envoi automatique par email désactivé
+  // pour le moment).
+  const [createdEncadrant, setCreatedEncadrant] = useState<Encadrant | null>(null);
   const createEncadrant = useCreateEncadrant();
   const updateEncadrant = useUpdateEncadrant();
 
@@ -42,11 +48,22 @@ export function AddEncadrantModal({ encadrant, onClose }: AddEncadrantModalProps
     if (isEditing && encadrant) {
       updateEncadrant.mutate({ id: encadrant.id, payload: form }, { onSuccess: onClose, onError });
     } else {
-      createEncadrant.mutate(form, { onSuccess: onClose, onError });
+      createEncadrant.mutate(form, { onSuccess: setCreatedEncadrant, onError });
     }
   }
 
   const isPending = createEncadrant.isPending || updateEncadrant.isPending;
+
+  if (createdEncadrant && createdEncadrant.tempPassword) {
+    return (
+      <CreatedAccountSummary
+        name={createdEncadrant.name}
+        email={createdEncadrant.email}
+        tempPassword={createdEncadrant.tempPassword}
+        onClose={onClose}
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">

@@ -2,6 +2,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useAuth } from "@/features/auth/AuthContext";
 import { useEncadrant, useUpdateEncadrantProfile } from "@/features/encadrants/api";
+import { ChangePasswordSection } from "@/components/shared/ChangePasswordSection";
 
 interface ProfileForm {
   telephone: string;
@@ -94,6 +95,10 @@ export function MonProfilPage() {
           </button>
         </div>
       </form>
+
+      <div className="mt-6">
+        <ChangePasswordSection />
+      </div>
     </div>
   );
 }

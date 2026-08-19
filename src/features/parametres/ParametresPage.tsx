@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { ChangePasswordSection } from "@/components/shared/ChangePasswordSection";
 
 const INITIAL_DEPARTEMENTS = [
   "Systèmes d'Information", "Finance", "Ressources Humaines",
@@ -65,6 +66,15 @@ export function ParametresPage() {
             Enregistrer les modifications
           </button>
         </div>
+      </div>
+
+      {/* NOUVEAU — seule section réellement branchée au backend de cette
+          page pour le moment (le reste au-dessus est encore mocké, voir
+          currentUser plus haut) : nécessaire depuis que le premier mot de
+          passe de chaque compte est un mot de passe par défaut prévisible
+          (voir backend default-password.util.ts). */}
+      <div className="mt-4">
+        <ChangePasswordSection />
       </div>
     </div>
   );

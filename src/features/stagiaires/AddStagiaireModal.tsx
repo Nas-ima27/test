@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { Stagiaire, RapportStagiaireStatut, TypeStage } from "@/types/stagiaire";
 import { useCreateStagiaire, useUpdateStagiaire } from "./api";
 import { useEncadrants } from "@/features/encadrants/api";
+import { CreatedAccountSummary } from "@/components/shared/CreatedAccountSummary";
 
 interface CreateStagiairePayload {
   name: string;
@@ -82,6 +83,11 @@ export function AddStagiaireModal({ stagiaire, onClose }: AddStagiaireModalProps
     stagiaire ? toFormValues(stagiaire) : emptyForm
   );
   const [error, setError] = useState<string | null>(null);
+  // NOUVEAU — reste affiché après création (au lieu de fermer directement
+  // la modale) pour montrer le mot de passe par défaut du compte de
+  // connexion créé en même temps que la fiche (voir CreatedAccountSummary
+  // — l'envoi automatique par email est désactivé pour le moment).
+  const [createdStagiaire, setCreatedStagiaire] = useState<Stagiaire | null>(null);
   const { data: encadrants = [] } = useEncadrants();
   const createStagiaire = useCreateStagiaire();
   const updateStagiaire = useUpdateStagiaire();
@@ -116,11 +122,22 @@ export function AddStagiaireModal({ stagiaire, onClose }: AddStagiaireModalProps
         { onSuccess: onClose, onError }
       );
     } else {
-      createStagiaire.mutate(payload, { onSuccess: onClose, onError });
+      createStagiaire.mutate(payload, { onSuccess: setCreatedStagiaire, onError });
     }
   }
 
   const isPending = createStagiaire.isPending || updateStagiaire.isPending;
+
+  if (createdStagiaire && createdStagiaire.tempPassword) {
+    return (
+      <CreatedAccountSummary
+        name={createdStagiaire.name}
+        email={createdStagiaire.email}
+        tempPassword={createdStagiaire.tempPassword}
+        onClose={onClose}
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">

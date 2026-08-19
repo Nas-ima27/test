@@ -31,6 +31,11 @@ export interface Stagiaire {
   rapportCommentaire?: string;
   sujetId?: number;
   compteActif: boolean;
+  // Présent UNIQUEMENT dans la réponse de POST /stagiaires (jamais sur
+  // GET) — mot de passe par défaut du compte de connexion créé en même
+  // temps que la fiche, à communiquer au stagiaire (pas d'email
+  // automatique, voir StagiairesService.create côté backend).
+  tempPassword?: string;
 }
 
 export interface CreateStagiairePayload {

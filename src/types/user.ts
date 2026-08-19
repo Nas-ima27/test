@@ -10,6 +10,11 @@ export interface User {
   service: string;
   status: UserStatus;
   createdAt: string;
+  // Présent UNIQUEMENT dans la réponse de POST /users (jamais sur
+  // GET /users) — mot de passe par défaut du compte, à communiquer
+  // manuellement (envoi automatique par email désactivé pour le moment,
+  // voir UsersService.create côté backend).
+  tempPassword?: string;
 }
 
 // MODIFIÉ — role retiré ; isSuperAdmin ajouté (optionnel, décide si le

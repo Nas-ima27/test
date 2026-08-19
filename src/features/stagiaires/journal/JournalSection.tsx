@@ -1,16 +1,20 @@
 // src/features/stagiaires/journal/JournalSection.tsx
 import { FormEvent, useState } from "react";
-import { NotebookPen, Calendar } from "lucide-react";
+import { NotebookPen, Calendar, MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
-import { JournalType } from "@/types/journal";
-import { useJournalEntries, useCreateJournalEntry } from "./api";
+import { JournalEntry, JournalType } from "@/types/journal";
+import { useJournalEntries, useCreateJournalEntry, useAddJournalComment } from "./api";
 
 interface JournalSectionProps {
   stagiaireId: number;
   readOnly?: boolean; // NOUVEAU — true pour l'encadrant, absent/false pour le stagiaire lui-même
+  // NOUVEAU — true pour l'encadrant : peut laisser un commentaire sur
+  // chaque entrée, même si readOnly (il ne peut pas écrire de nouvelle
+  // entrée, mais peut réagir à celles du stagiaire).
+  canComment?: boolean;
 }
 
-export function JournalSection({ stagiaireId, readOnly = false }: JournalSectionProps) {
+export function JournalSection({ stagiaireId, readOnly = false, canComment = false }: JournalSectionProps) {
   const { data: entries = [], isLoading } = useJournalEntries(stagiaireId);
   const createEntry = useCreateJournalEntry();
 
@@ -87,19 +91,103 @@ export function JournalSection({ stagiaireId, readOnly = false }: JournalSection
       ) : (
         <div className="space-y-3">
           {entries.map((entry) => (
-            <div key={entry.id} className="border border-slate-100 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Badge>{entry.type}</Badge>
-                  <span className="flex items-center gap-1.5 text-xs text-slate-400">
-                    <Calendar className="h-3 w-3" /> {entry.date}
-                  </span>
-                </div>
-              </div>
-              <p className="text-sm text-slate-700 whitespace-pre-wrap">{entry.contenu}</p>
-            </div>
+            <JournalEntryCard
+              key={entry.id}
+              stagiaireId={stagiaireId}
+              entry={entry}
+              canComment={canComment}
+            />
           ))}
         </div>
+      )}
+    </div>
+  );
+}
+
+interface JournalEntryCardProps {
+  stagiaireId: number;
+  entry: JournalEntry;
+  canComment: boolean;
+}
+
+/**
+ * NOUVEAU — une entrée du journal + son commentaire d'encadrant éventuel.
+ * Extrait en sous-composant pour que chaque entrée gère son propre état
+ * de formulaire de commentaire, sans interférer avec les autres.
+ */
+function JournalEntryCard({ stagiaireId, entry, canComment }: JournalEntryCardProps) {
+  const addComment = useAddJournalComment();
+  const [showForm, setShowForm] = useState(false);
+  const [commentaire, setCommentaire] = useState(entry.commentaireEncadrant ?? "");
+
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!commentaire.trim()) return;
+    addComment.mutate(
+      { stagiaireId, entryId: entry.id, commentaire: commentaire.trim() },
+      { onSuccess: () => setShowForm(false) }
+    );
+  }
+
+  return (
+    <div className="border border-slate-100 rounded-lg p-4">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <Badge>{entry.type}</Badge>
+          <span className="flex items-center gap-1.5 text-xs text-slate-400">
+            <Calendar className="h-3 w-3" /> {entry.date}
+          </span>
+        </div>
+      </div>
+      <p className="text-sm text-slate-700 whitespace-pre-wrap">{entry.contenu}</p>
+
+      {entry.commentaireEncadrant && !showForm && (
+        <div className="flex items-start gap-2 mt-3 text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2.5">
+          <MessageSquare className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-medium">Commentaire de l'encadrant</p>
+            <p className="mt-0.5">{entry.commentaireEncadrant}</p>
+          </div>
+        </div>
+      )}
+
+      {canComment && !showForm && (
+        <button
+          type="button"
+          onClick={() => setShowForm(true)}
+          className="flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:underline mt-3"
+        >
+          <MessageSquare className="h-3.5 w-3.5" />
+          {entry.commentaireEncadrant ? "Modifier le commentaire" : "Laisser un commentaire"}
+        </button>
+      )}
+
+      {canComment && showForm && (
+        <form onSubmit={handleSubmit} className="mt-3">
+          <textarea
+            value={commentaire}
+            onChange={(e) => setCommentaire(e.target.value)}
+            rows={2}
+            placeholder="Votre retour sur cette entrée..."
+            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+          />
+          <div className="flex justify-end gap-2 mt-2">
+            <button
+              type="button"
+              onClick={() => { setShowForm(false); setCommentaire(entry.commentaireEncadrant ?? ""); }}
+              className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 rounded-lg"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={!commentaire.trim() || addComment.isPending}
+              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg disabled:opacity-50"
+            >
+              {addComment.isPending ? "Envoi..." : "Enregistrer"}
+            </button>
+          </div>
+        </form>
       )}
     </div>
   );

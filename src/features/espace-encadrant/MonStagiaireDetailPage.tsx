@@ -7,6 +7,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { useStagiaire, useEvaluerRapport } from "@/features/stagiaires/api";
 import { dureeRestante } from "@/lib/date";
 import { JournalSection } from "@/features/stagiaires/journal/JournalSection";
+import { TachesSection } from "@/features/stagiaires/taches/TachesSection";
 
 export function MonStagiaireDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -94,7 +95,21 @@ export function MonStagiaireDetailPage() {
             {stagiaire.rapportFichierNom && (
               <p className="text-sm text-slate-700 mt-2">
                 <FileText className="h-3.5 w-3.5 inline mr-1.5 text-slate-400" />
-                {stagiaire.rapportFichierNom}
+                {/* CORRECTIF — le nom du fichier n'était pas cliquable :
+                    l'encadrant n'avait aucun moyen de consulter le rapport
+                    déposé (même pattern que RapportSection.tsx côté stagiaire). */}
+                {stagiaire.rapportFichierUrl ? (
+                  <a
+                    href={stagiaire.rapportFichierUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-blue-600"
+                  >
+                    {stagiaire.rapportFichierNom}
+                  </a>
+                ) : (
+                  stagiaire.rapportFichierNom
+                )}
               </p>
             )}
             {stagiaire.rapportDateDepot && (
@@ -167,8 +182,11 @@ export function MonStagiaireDetailPage() {
         )}
       </div>
 
-      {/* Journal de bord en lecture seule */}
-       <JournalSection stagiaireId={stagiaire.id} readOnly />
+      {/* NOUVEAU — l'encadrant peut assigner des tâches à ce stagiaire */}
+      <TachesSection stagiaireId={stagiaire.id} canCreate />
+
+      {/* Journal de bord en lecture seule, mais commentable par l'encadrant */}
+       <JournalSection stagiaireId={stagiaire.id} readOnly canComment />
     </div>
   );
 }

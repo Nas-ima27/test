@@ -52,3 +52,28 @@ export function useCreateJournalEntry() {
     },
   });
 }
+
+// NOUVEAU — l'encadrant commente une entrée précise du journal.
+interface AddJournalCommentPayload {
+  stagiaireId: number;
+  entryId: number;
+  commentaire: string;
+}
+
+async function addJournalComment(payload: AddJournalCommentPayload): Promise<JournalEntry> {
+  const { data } = await apiClient.patch<JournalEntry>(
+    `/stagiaires/${payload.stagiaireId}/journal/${payload.entryId}/commentaire`,
+    { commentaire: payload.commentaire }
+  );
+  return data;
+}
+
+export function useAddJournalComment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: addJournalComment,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["journal", variables.stagiaireId] });
+    },
+  });
+}

@@ -6,6 +6,7 @@ import { useStagiaire } from "@/features/stagiaires/api";
 import { useSujets } from "@/features/sujets/api";
 import { dureeRestante, dureeTotaleJours } from "@/lib/date";
 import { JournalSection } from "@/features/stagiaires/journal/JournalSection"; // NOUVEAU
+import { TachesSection } from "@/features/stagiaires/taches/TachesSection"; // NOUVEAU
 import { useAuth } from "@/features/auth/AuthContext";
 
 
@@ -101,6 +102,9 @@ export function MonStagePage() {
           )}
         </div>
       </div>
+
+      {/* NOUVEAU — tâches assignées par l'encadrant, avant le journal */}
+      <TachesSection stagiaireId={stagiaire.id} canToggle />
 
       {/* NOUVEAU — journal de bord en bas de page */}
       <JournalSection stagiaireId={stagiaire.id} />

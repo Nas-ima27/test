@@ -1,7 +1,7 @@
 // src/features/sujets/AddSujetModal.tsx
 import { FormEvent, useState } from "react";
 import { X, Search, AlertCircle } from "lucide-react";
-import { CreateSujetPayload, Sujet, SujetStatut } from "@/types/sujet";
+import { CreateSujetPayload, Sujet, SujetStatut, TypeCandidatSujet } from "@/types/sujet";
 import { useCreateSujet, useUpdateSujet, checkSujetSimilarity } from "./api";
 
 const DEPARTEMENTS = [
@@ -29,6 +29,7 @@ export function AddSujetModal({ encadrantId, encadrantName, departementDefault, 
   const [titre, setTitre] = useState(sujet?.titre ?? "");
   const [description, setDescription] = useState(sujet?.description ?? "");
   const [departement, setDepartement] = useState(sujet?.departement ?? departementDefault ?? DEPARTEMENTS[0]);
+  const [typeCandidat, setTypeCandidat] = useState<TypeCandidatSujet>(sujet?.typeCandidat ?? "PFA et PFE");
   const [technologiesInput, setTechnologiesInput] = useState(sujet?.technologies.join(", ") ?? "");
   const [statut, setStatut] = useState<SujetStatut>(sujet?.statut ?? "Brouillon");
 
@@ -47,10 +48,6 @@ export function AddSujetModal({ encadrantId, encadrantName, departementDefault, 
       const results = await checkSujetSimilarity(titre, description);
       setSimilaires(results);
     } catch (error: any) {
-      // MODIFIÉ : message générique — le backend est maintenant branché,
-      // l'ancien message ("nécessite le backend, pas encore disponible
-      // en mode démo") n'avait plus lieu d'être. Affiche le message du
-      // backend si disponible (ex: 401/403), sinon un message générique.
       setCheckError(
         error.response?.data?.message ??
           "Impossible de vérifier la similarité pour le moment. Réessayez."
@@ -71,6 +68,7 @@ export function AddSujetModal({ encadrantId, encadrantName, departementDefault, 
       titre,
       description: description || undefined,
       departement,
+      typeCandidat,
       encadrantId,
       encadrantName,
       technologies,
@@ -153,6 +151,20 @@ export function AddSujetModal({ encadrantId, encadrantName, departementDefault, 
               <p className="text-xs text-emerald-700 mt-2">Aucun sujet similaire détecté.</p>
             )}
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">Type de candidat visé</label>
+            <select
+              value={typeCandidat}
+              onChange={(e) => setTypeCandidat(e.target.value as TypeCandidatSujet)}
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+            >
+              <option value="PFA et PFE">PFA et PFE</option>
+              <option value="PFA">PFA uniquement</option>
+              <option value="PFE">PFE uniquement</option>
+            </select>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Département</label>

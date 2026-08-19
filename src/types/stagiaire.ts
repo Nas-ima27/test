@@ -3,6 +3,9 @@ export type StagiaireStatut = "À venir" | "En cours" | "Terminé";
 
 export type RapportStagiaireStatut = "Non déposé" | "En attente" | "Corrections demandées" | "Validé";
 
+// NOUVEAU — type de stage
+export type TypeStage = "PFA" | "PFE";
+
 export interface Stagiaire {
   id: number;
   name: string;
@@ -13,6 +16,7 @@ export interface Stagiaire {
   bio?: string;
   ecole: string;
   filiere: string;
+  typeStage: TypeStage; // NOUVEAU
   departement: string;
   encadrantId: number | null;
   encadrantName: string | null;
@@ -22,7 +26,7 @@ export interface Stagiaire {
   statut: StagiaireStatut;
   rapportStatut: RapportStagiaireStatut;
   rapportFichierNom?: string;
-  rapportFichierUrl?: string | null; // NOUVEAU — URL S3/MinIO du fichier réellement uploadé
+  rapportFichierUrl?: string | null;
   rapportDateDepot?: string;
   rapportCommentaire?: string;
   sujetId?: number;
@@ -34,6 +38,7 @@ export interface CreateStagiairePayload {
   email: string;
   ecole: string;
   filiere: string;
+  typeStage: TypeStage; // NOUVEAU — obligatoire, exigé par le backend
   departement: string;
   encadrantId: number | null;
   dateDebut: string;

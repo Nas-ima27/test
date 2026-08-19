@@ -56,6 +56,35 @@ async function toggleEncadrantActive(id: number, compteActif: boolean): Promise<
   return data;
 }
 
+interface UpdateEncadrantProfilePayload {
+  telephone?: string;
+}
+
+async function updateEncadrantProfile(
+  id: number,
+  payload: UpdateEncadrantProfilePayload
+): Promise<Encadrant> {
+  if (USE_MOCK) {
+    const index = mockEncadrants.findIndex((e) => e.id === id);
+    mockEncadrants[index] = { ...mockEncadrants[index], ...payload };
+    return Promise.resolve(mockEncadrants[index]);
+  }
+  const { data } = await apiClient.patch<Encadrant>(`/encadrants/${id}/profile`, payload);
+  return data;
+}
+
+export function useUpdateEncadrantProfile() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: UpdateEncadrantProfilePayload }) =>
+      updateEncadrantProfile(id, payload),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["encadrants"] });
+      queryClient.invalidateQueries({ queryKey: ["encadrants", variables.id] });
+    },
+  });
+}
+
 export function useEncadrants() {
   return useQuery({ queryKey: ["encadrants"], queryFn: fetchEncadrants });
 }

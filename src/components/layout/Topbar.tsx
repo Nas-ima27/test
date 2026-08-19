@@ -1,13 +1,21 @@
 // src/components/layout/Topbar.tsx
 import { useState } from "react"; // NOUVEAU
 import { useNavigate } from "react-router-dom"; // NOUVEAU
-import { Search, Bell, ChevronDown, LogOut } from "lucide-react"; // MODIFIÉ — ajout LogOut
+import { Search, Bell, ChevronDown, LogOut, User } from "lucide-react"; // MODIFIÉ — ajout LogOut, User
 import { useAuth } from "@/features/auth/AuthContext"; // NOUVEAU
+
+// Route "Mon profil" selon l'espace de l'utilisateur connecté — pas de
+// page profil pour l'Admin, qui gère ses infos via /utilisateurs.
+const PROFIL_ROUTES: Partial<Record<string, string>> = {
+  Stagiaire: "/espace-stagiaire/profil",
+  Encadrant: "/espace-encadrant/profil",
+};
 
 export function Topbar() {
   const { user, logout } = useAuth(); // MODIFIÉ — remplace currentUser en dur
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const profilRoute = user ? PROFIL_ROUTES[user.role] : undefined;
 
   function handleLogout() {
     logout();
@@ -48,6 +56,17 @@ export function Topbar() {
                   <p className="text-sm font-medium text-slate-900 truncate">{user?.name}</p>
                   <p className="text-xs text-slate-500">{user?.role}</p>
                 </div>
+                {profilRoute && (
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      navigate(profilRoute);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
+                  >
+                    <User className="h-4 w-4" /> Mon profil
+                  </button>
+                )}
                 <button
                   onClick={handleLogout}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"

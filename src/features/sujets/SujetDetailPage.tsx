@@ -34,6 +34,7 @@ export function SujetDetailPage() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Badge>{sujet.statut}</Badge>
+              <Badge>{sujet.typeCandidat}</Badge>
             </div>
             <h2 className="text-xl font-bold text-slate-900 max-w-2xl">{sujet.titre}</h2>
             <div className="flex flex-wrap gap-1.5 mt-3">

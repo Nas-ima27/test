@@ -197,6 +197,38 @@ export function useDeposerRapport() {
   });
 }
 
+interface UpdateStagiaireProfilePayload {
+  telephone?: string;
+  linkedin?: string;
+  github?: string;
+  bio?: string;
+}
+
+async function updateStagiaireProfile(
+  id: number,
+  payload: UpdateStagiaireProfilePayload
+): Promise<Stagiaire> {
+  if (USE_MOCK) {
+    const index = mockStagiaires.findIndex((s) => s.id === id);
+    mockStagiaires[index] = { ...mockStagiaires[index], ...payload };
+    return Promise.resolve(mockStagiaires[index]);
+  }
+  const { data } = await apiClient.patch<Stagiaire>(`/stagiaires/${id}/profile`, payload);
+  return data;
+}
+
+export function useUpdateStagiaireProfile() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: UpdateStagiaireProfilePayload }) =>
+      updateStagiaireProfile(id, payload),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["stagiaires"] });
+      queryClient.invalidateQueries({ queryKey: ["stagiaires", variables.id] });
+    },
+  });
+}
+
 export function useEvaluerRapport() {
   const queryClient = useQueryClient();
   return useMutation({

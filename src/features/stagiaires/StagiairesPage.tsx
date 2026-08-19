@@ -81,6 +81,7 @@ export function StagiairesPage() {
               <thead>
                 <tr className="text-left text-xs font-semibold text-slate-500 uppercase border-b border-slate-100">
                   <th className="px-5 py-3">Stagiaire</th>
+                  <th className="px-5 py-3">Type de stage</th>
                   <th className="px-5 py-3">Établissement / Formation</th>
                   <th className="px-5 py-3">Département</th>
                   <th className="px-5 py-3">Encadrant</th>
@@ -105,6 +106,9 @@ export function StagiairesPage() {
                     <td className="px-5 py-3.5">
                       <p className="text-slate-800">{s.ecole}</p>
                       <p className="text-xs text-slate-500">{s.filiere}</p>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <Badge>{s.typeStage}</Badge>
                     </td>
                     <td className="px-5 py-3.5 text-slate-600">{s.departement}</td>
                     <td className="px-5 py-3.5">

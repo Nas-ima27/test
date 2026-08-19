@@ -23,12 +23,14 @@ import { SujetsDisponiblesPage } from "@/features/espace-stagiaire/SujetsDisponi
 import { MesCandidaturesPage } from "@/features/espace-stagiaire/MesCandidaturesPage";
 import { MonStagePage } from "@/features/espace-stagiaire/MonStagePage";
 import { MonRapportPage } from "@/features/espace-stagiaire/MonRapportPage";
+import { MonProfilPage as StagiaireProfilPage } from "@/features/espace-stagiaire/MonProfilPage";
 import { MonTableauDeBordPage as EncadrantDashboard } from "@/features/espace-encadrant/MonTableauDeBordPage";
 import { MesSujetsPage } from "@/features/espace-encadrant/MesSujetsPage";
 import { MonSujetDetailPage } from "@/features/espace-encadrant/MonSujetDetailPage";
 import { CandidaturesRecuesPage } from "@/features/espace-encadrant/CandidaturesRecuesPage";
 import { MesStagiairesPage } from "@/features/espace-encadrant/MesStagiairesPage";
 import { MonStagiaireDetailPage } from "@/features/espace-encadrant/MonStagiaireDetailPage";
+import { MonProfilPage as EncadrantProfilPage } from "@/features/espace-encadrant/MonProfilPage";
 
 export default function App() {
   return (
@@ -74,6 +76,7 @@ export default function App() {
           <Route path="rapport" element={<MonRapportPage />} />
           <Route path="bibliotheque" element={<BibliothequePage />} />
           <Route path="bibliotheque/:id" element={<RapportDetailPage />} />
+          <Route path="profil" element={<StagiaireProfilPage />} />
         </Route>
 
         {/* Espace Encadrant — protégé */}
@@ -93,6 +96,7 @@ export default function App() {
           <Route path="stagiaires/:id" element={<MonStagiaireDetailPage />} />
           <Route path="bibliotheque" element={<BibliothequePage />} />
           <Route path="bibliotheque/:id" element={<RapportDetailPage />} />
+          <Route path="profil" element={<EncadrantProfilPage />} />
         </Route>
       </Routes>
     </AuthProvider>

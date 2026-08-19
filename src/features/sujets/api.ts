@@ -32,6 +32,7 @@ async function createSujet(payload: CreateSujetPayload): Promise<Sujet> {
       id: Date.now(),
       nombreCandidatures: 0,
       ...payload,
+      typeCandidat: payload.typeCandidat ?? "PFA et PFE",
     };
     mockSujets.push(created);
     return Promise.resolve(created);

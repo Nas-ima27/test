@@ -1,7 +1,7 @@
 // src/features/stagiaires/AddStagiaireModal.tsx
 import { FormEvent, useState } from "react";
 import { X } from "lucide-react";
-import { Stagiaire, RapportStagiaireStatut } from "@/types/stagiaire";
+import { Stagiaire, RapportStagiaireStatut, TypeStage } from "@/types/stagiaire";
 import { useCreateStagiaire, useUpdateStagiaire } from "./api";
 import { useEncadrants } from "@/features/encadrants/api";
 
@@ -10,6 +10,7 @@ interface CreateStagiairePayload {
   email: string;
   ecole: string;
   filiere: string;
+  typeStage: TypeStage;
   departement: string;
   encadrantId: number | null;
   dateDebut: string;
@@ -31,6 +32,7 @@ const emptyForm: CreateStagiairePayload = {
   email: "",
   ecole: "",
   filiere: "",
+  typeStage: "PFA",
   departement: DEPARTEMENTS[0],
   encadrantId: null,
   dateDebut: "",
@@ -38,20 +40,30 @@ const emptyForm: CreateStagiairePayload = {
   rapportStatut: "À venir" as RapportStagiaireStatut,
 };
 
+function formatDateForInput(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function nextDay(date: string): string {
+  if (!date) return formatDateForInput(new Date());
+  const value = new Date(`${date}T00:00:00`);
+  value.setDate(value.getDate() + 1);
+  return formatDateForInput(value);
+}
+
 function toFormValues(s: Stagiaire): CreateStagiairePayload {
   return {
     name: s.name, email: s.email, ecole: s.ecole, filiere: s.filiere,
+    typeStage: s.typeStage,
     departement: s.departement, encadrantId: s.encadrantId, dateDebut: s.dateDebut, dateFin: s.dateFin,
     rapportStatut: s.rapportStatut,
   };
 }
 
 function toApiPayload(form: CreateStagiairePayload): ApiStagiairePayload {
-  // MODIFIÉ — rapportStatut retiré du payload envoyé au backend : c'est
-  // un champ calculé côté serveur (toujours "Non déposé" à la création,
-  // voir BACKEND_SPEC_UPDATED.md §3), jamais accepté par CreateStagiaireDto
-  // (ValidationPipe avec forbidNonWhitelisted rejette sinon la requête
-  // avec 400 "property rapportStatut should not exist").
   const { rapportStatut, ...rest } = form;
   return {
     ...rest,
@@ -73,6 +85,8 @@ export function AddStagiaireModal({ stagiaire, onClose }: AddStagiaireModalProps
   const { data: encadrants = [] } = useEncadrants();
   const createStagiaire = useCreateStagiaire();
   const updateStagiaire = useUpdateStagiaire();
+  const today = formatDateForInput(new Date());
+  const minimumEndDate = form.dateDebut ? nextDay(form.dateDebut) : today;
 
   function set<K extends keyof CreateStagiairePayload>(key: K, value: CreateStagiairePayload[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -81,6 +95,15 @@ export function AddStagiaireModal({ stagiaire, onClose }: AddStagiaireModalProps
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+
+    if (form.dateDebut < today) {
+      setError("La date de debut ne peut pas etre dans le passe.");
+      return;
+    }
+    if (form.dateFin <= form.dateDebut) {
+      setError("La date de fin doit etre posterieure a la date de debut.");
+      return;
+    }
     const payload = toApiPayload(form);
 
     const onError = (err: any) => {
@@ -148,6 +171,18 @@ export function AddStagiaireModal({ stagiaire, onClose }: AddStagiaireModalProps
             </div>
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">Type de stage</label>
+            <select
+              value={form.typeStage}
+              onChange={(e) => set("typeStage", e.target.value as TypeStage)}
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+            >
+              <option value="PFA">PFA — Projet de Fin d'Année</option>
+              <option value="PFE">PFE — Projet de Fin d'Études</option>
+            </select>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Département</label>
@@ -174,12 +209,21 @@ export function AddStagiaireModal({ stagiaire, onClose }: AddStagiaireModalProps
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Date de début</label>
-              <input required type="date" onChange={(e) => set("dateDebut", e.target.value)}
+              <input required type="date" value={form.dateDebut} min={today}
+                onChange={(e) => {
+                  const dateDebut = e.target.value;
+                  setForm((prev) => ({
+                    ...prev,
+                    dateDebut,
+                    dateFin: prev.dateFin && prev.dateFin <= dateDebut ? "" : prev.dateFin,
+                  }));
+                }}
                 className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Date de fin</label>
-              <input required type="date" onChange={(e) => set("dateFin", e.target.value)}
+              <input required type="date" value={form.dateFin} min={minimumEndDate}
+                onChange={(e) => set("dateFin", e.target.value)}
                 className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40" />
             </div>
           </div>

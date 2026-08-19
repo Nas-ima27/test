@@ -57,6 +57,7 @@ export function StagiaireDetailPage() {
               <div className="flex items-center gap-2 mt-2">
                 <Badge>{stagiaire.statut}</Badge>
                 <Badge>{stagiaire.rapportStatut}</Badge>
+                <Badge>{stagiaire.typeStage}</Badge>
               </div>
             </div>
           </div>

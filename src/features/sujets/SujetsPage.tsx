@@ -1,17 +1,16 @@
 // src/features/sujets/SujetsPage.tsx
-import { useNavigate } from "react-router-dom"; // NOUVEAU
-import { AlertCircle } from "lucide-react"; // MODIFIÉ — Plus retiré (plus besoin, bouton "Proposer" supprimé)
+import { useNavigate } from "react-router-dom";
+import { AlertCircle } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { useSujets } from "./api";
 
 export function SujetsPage() {
-  const navigate = useNavigate(); // NOUVEAU
+  const navigate = useNavigate();
   const { data: sujets = [], isLoading } = useSujets();
 
   return (
     <div>
-      {/* MODIFIÉ — plus d'action "Proposer un sujet" côté admin, vue lecture seule */}
       <PageHeader
         title="Sujets de stage"
         subtitle="Consultez les sujets proposés par les encadrants."
@@ -25,7 +24,10 @@ export function SujetsPage() {
             <div key={s.id} className="bg-white rounded-xl border border-slate-200 p-5">
               <div className="flex items-start justify-between gap-3">
                 <h3 className="font-semibold text-slate-900 leading-snug">{s.titre}</h3>
-                <Badge>{s.statut}</Badge>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <Badge>{s.statut}</Badge>
+                  <Badge>{s.typeCandidat}</Badge>
+                </div>
               </div>
               <p className="text-sm text-slate-500 mt-1.5">
                 {s.departement} · Encadré par {s.encadrantName}
@@ -52,7 +54,6 @@ export function SujetsPage() {
                 <span className="text-sm text-slate-500">
                   {s.nombreCandidatures} candidature{s.nombreCandidatures !== 1 ? "s" : ""}
                 </span>
-                {/* MODIFIÉ — "Voir" cliquable, "Modifier" retiré (lecture seule pour l'admin) */}
                 <button
                   onClick={() => navigate(`/sujets/${s.id}`)}
                   className="text-blue-600 font-medium hover:underline text-sm"
